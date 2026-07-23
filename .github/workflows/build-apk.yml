@@ -1,1 +1,54 @@
+name: 云端打包安卓 APK
 
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-android-apk:
+    name: 构建水妞妞的工作台 APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装 Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: 安装 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 安装项目依赖
+        run: npm install
+
+      - name: 准备网页资源
+        run: npm run prepare:web
+
+      - name: 创建安卓项目
+        run: npx cap add android
+
+      - name: 同步安卓项目
+        run: npx cap sync android
+
+      - name: 生成 Debug APK
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: 上传 APK 文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: 水妞妞的工作台-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
